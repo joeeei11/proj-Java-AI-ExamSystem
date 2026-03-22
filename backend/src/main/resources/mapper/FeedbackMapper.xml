@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hnust.examai.module.feedback.FeedbackMapper">
+
+    <!-- 反馈列表结果映射 -->
+    <resultMap id="FeedbackVOMap" type="com.hnust.examai.module.feedback.dto.FeedbackVO">
+        <id property="id" column="id"/>
+        <result property="questionId" column="question_id"/>
+        <result property="questionSummary" column="question_summary"/>
+        <result property="type" column="type"/>
+        <result property="typeLabel" column="type_label"/>
+        <result property="status" column="status"/>
+        <result property="statusLabel" column="status_label"/>
+        <result property="description" column="description"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="repliedAt" column="replied_at"/>
+    </resultMap>
+
+    <!-- 用户自己的反馈列表 -->
+    <select id="selectByUserId" resultMap="FeedbackVOMap">
+        SELECT
+            f.id,
+            f.question_id,
+            LEFT(q.content, 60) AS question_summary,
+            f.type,
+            CASE f.type
+                WHEN 1 THEN '答案错误'
+                WHEN 2 THEN '题干歧义'
+                WHEN 3 THEN '解析不清'
+                WHEN 4 THEN '排版问题'
+                ELSE '其他'
+            END AS type_label,
+            f.status,
+            CASE f.status
+                WHEN 0 THEN '待处理'
+                WHEN 1 THEN '已采纳'
+                WHEN 2 THEN '已驳回'
+                WHEN 3 THEN '已修复'
+                ELSE '未知'
+            END AS status_label,
+            f.description,
+            f.created_at,
+            f.replied_at
+        FROM t_question_feedback f
+        LEFT JOIN t_question q ON f.question_id = q.id
+        WHERE f.user_id = #{userId}
+        ORDER BY f.created_at DESC
+    </select>
+
+    <!-- 管理员查看全部反馈（可按状态过滤） -->
+    <select id="selectAllForAdmin" resultMap="FeedbackVOMap">
+        SELECT
+            f.id,
+            f.question_id,
+            LEFT(q.content, 60) AS question_summary,
+            f.type,
+            CASE f.type
+                WHEN 1 THEN '答案错误'
+                WHEN 2 THEN '题干歧义'
+                WHEN 3 THEN '解析不清'
+                WHEN 4 THEN '排版问题'
+                ELSE '其他'
+            END AS type_label,
+            f.status,
+            CASE f.status
+                WHEN 0 THEN '待处理'
+                WHEN 1 THEN '已采纳'
+                WHEN 2 THEN '已驳回'
+                WHEN 3 THEN '已修复'
+                ELSE '未知'
+            END AS status_label,
+            f.description,
+            f.created_at,
+            f.replied_at
+        FROM t_question_feedback f
+        LEFT JOIN t_question q ON f.question_id = q.id
+        <where>
+            <if test="status != null">
+                f.status = #{status}
+            </if>
+        </where>
+        ORDER BY
+            CASE WHEN f.status = 0 THEN 0 ELSE 1 END,
+            f.created_at DESC
+    </select>
+
+</mapper>

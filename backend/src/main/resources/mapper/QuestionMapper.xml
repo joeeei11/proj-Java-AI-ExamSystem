@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hnust.examai.module.quiz.QuestionMapper">
+
+    <!-- 批量插入题目 -->
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_question (subject_id, knowledge_point_id, type, difficulty, content, options,
+                                answer, explanation, source, ai_cache_key, created_at, updated_at)
+        VALUES
+        <foreach collection="list" item="q" separator=",">
+            (#{q.subjectId}, #{q.knowledgePointId}, #{q.type}, #{q.difficulty}, #{q.content},
+             #{q.options}, #{q.answer}, #{q.explanation}, #{q.source}, #{q.aiCacheKey},
+             NOW(), NOW())
+        </foreach>
+    </insert>
+
+</mapper>

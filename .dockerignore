@@ -1,0 +1,25 @@
+# Node
+frontend/node_modules
+frontend/dist
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Git
+.git
+.gitignore
+
+# Docs
+*.md
+!frontend/README.md
+
+# Misc
+.claude
+.obsidian
+.spec-workflow
+Source
+WorkRiver
+thesis
+tasks

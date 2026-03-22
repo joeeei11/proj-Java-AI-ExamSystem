@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hnust.examai.module.flashcard.FlashcardMapper">
+
+    <!--
+        今日到期待复习卡片：
+        next_review_at <= NOW()（已到期）
+        或 next_review_at IS NULL（从未复习，即新卡）
+    -->
+    <select id="selectTodayReview" resultType="com.hnust.examai.entity.Flashcard">
+        SELECT *
+        FROM t_flashcard
+        WHERE user_id = #{userId}
+          AND (next_review_at IS NULL OR next_review_at &lt;= NOW())
+        ORDER BY ISNULL(next_review_at) DESC, next_review_at ASC
+    </select>
+
+</mapper>

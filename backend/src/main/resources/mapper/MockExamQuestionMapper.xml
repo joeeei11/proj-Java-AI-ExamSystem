@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hnust.examai.module.mock.MockExamQuestionMapper">
+
+    <!-- 按序号排序查询模考题目明细 -->
+    <select id="selectByExamId" resultType="com.hnust.examai.entity.MockExamQuestion">
+        SELECT *
+        FROM t_mock_exam_question
+        WHERE exam_id = #{examId}
+        ORDER BY sort_order ASC
+    </select>
+
+    <!-- 切换标记状态 -->
+    <update id="toggleFlag">
+        UPDATE t_mock_exam_question
+        SET is_flagged = CASE WHEN is_flagged = 1 THEN 0 ELSE 1 END
+        WHERE exam_id = #{examId}
+          AND question_id = #{questionId}
+    </update>
+
+</mapper>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hnust.examai.module.stats.StatsMapper">
+
+    <!-- 查询学习总览（从 t_study_stat 聚合） -->
+    <select id="selectOverview" resultType="com.hnust.examai.module.stats.dto.StatsOverviewVO">
+        SELECT
+            COALESCE(SUM(answer_count), 0)  AS totalAnswered,
+            COALESCE(SUM(correct_count), 0) AS totalCorrect,
+            COUNT(DISTINCT stat_date)        AS studyDays
+        FROM t_study_stat
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 近 N 天日度统计（只返回有数据的日期，补零在 Service 层处理） -->
+    <select id="selectDailyStats" resultType="com.hnust.examai.module.stats.dto.DailyStatVO">
+        SELECT
+            DATE_FORMAT(stat_date, '%Y-%m-%d') AS `date`,
+            COALESCE(answer_count, 0)           AS totalAnswered,
+            COALESCE(correct_count, 0)          AS correctCount
+        FROM t_study_stat
+        WHERE user_id = #{userId}
+          AND stat_date >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY)
+        ORDER BY stat_date ASC
+    </select>
+
+    <!-- 按科目聚合（从 t_user_answer JOIN t_question/t_subject） -->
+    <select id="selectSubjectStats" resultType="com.hnust.examai.module.stats.dto.SubjectStatVO">
+        SELECT
+            q.subject_id          AS subjectId,
+            s.name                AS subjectName,
+            COUNT(ua.id)          AS totalAnswered,
+            SUM(ua.is_correct)    AS correctCount
+        FROM t_user_answer ua
+            INNER JOIN t_question q ON ua.question_id = q.id
+            INNER JOIN t_subject  s ON q.subject_id  = s.id
+        WHERE ua.user_id = #{userId}
+        GROUP BY q.subject_id, s.name
+        ORDER BY totalAnswered DESC
+    </select>
+
+    <!-- 错题总数 -->
+    <select id="countTotalErrors" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM t_error_book WHERE user_id = #{userId}
+    </select>
+
+    <!-- 已掌握错题数 -->
+    <select id="countMasteredErrors" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM t_error_book WHERE user_id = #{userId} AND is_mastered = 1
+    </select>
+
+</mapper>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hnust.examai.module.errorbook.ErrorBookMapper">
+
+    <!-- 错题本 VO ResultMap（含题目 + 科目 JOIN 字段） -->
+    <resultMap id="ErrorBookVOMap" type="com.hnust.examai.module.errorbook.dto.ErrorBookVO">
+        <id     property="id"                  column="id"/>
+        <result property="questionId"          column="question_id"/>
+        <result property="questionType"        column="question_type"/>
+        <result property="difficulty"          column="difficulty"/>
+        <result property="questionContent"     column="question_content"/>
+        <result property="options"             column="options"/>
+        <result property="answer"              column="answer"/>
+        <result property="explanation"         column="explanation"/>
+        <result property="subjectId"           column="subject_id"/>
+        <result property="subjectName"         column="subject_name"/>
+        <result property="errorReason"         column="error_reason"/>
+        <result property="isMastered"          column="is_mastered"/>
+        <result property="reviewCount"         column="review_count"/>
+        <result property="consecutiveCorrect"  column="consecutive_correct"/>
+        <result property="reviewIntervalDays"  column="review_interval_days"/>
+        <result property="nextReviewAt"        column="next_review_at"/>
+        <result property="createdAt"           column="created_at"/>
+        <result property="updatedAt"           column="updated_at"/>
+    </resultMap>
+
+    <!-- 防重 upsert：错题已存在则只更新 updated_at，不存在则插入新记录 -->
+    <insert id="upsertError">
+        INSERT INTO t_error_book (user_id, question_id, is_mastered, review_count,
+                                  consecutive_correct, review_interval_days, created_at, updated_at)
+        VALUES (#{userId}, #{questionId}, 0, 0, 0, 1, NOW(), NOW())
+        ON DUPLICATE KEY UPDATE updated_at = NOW()
+    </insert>
+
+    <!-- 错题列表（支持科目/掌握状态过滤，JOIN 题目表 + 科目表） -->
+    <select id="selectByUserId" resultMap="ErrorBookVOMap">
+        SELECT
+            eb.id,
+            eb.question_id,
+            q.type           AS question_type,
+            q.difficulty,
+            q.content        AS question_content,
+            q.options,
+            q.answer,
+            q.explanation,
+            q.subject_id,
+            s.name           AS subject_name,
+            eb.error_reason,
+            eb.is_mastered,
+            eb.review_count,
+            eb.consecutive_correct,
+            eb.review_interval_days,
+            eb.next_review_at,
+            eb.created_at,
+            eb.updated_at
+        FROM t_error_book eb
+        INNER JOIN t_question q ON eb.question_id = q.id
+        LEFT  JOIN t_subject  s ON q.subject_id   = s.id
+        WHERE eb.user_id = #{userId}
+          <if test="subjectId != null">
+              AND q.subject_id = #{subjectId}
+          </if>
+          <if test="isMastered != null">
+              AND eb.is_mastered = #{isMastered}
+          </if>
+        ORDER BY eb.updated_at DESC
+    </select>
+
+    <!-- 今日 SRS 到期错题（next_review_at &lt;= NOW() 或从未复做，且未掌握） -->
+    <select id="selectTodayReview" resultMap="ErrorBookVOMap">
+        SELECT
+            eb.id,
+            eb.question_id,
+            q.type           AS question_type,
+            q.difficulty,
+            q.content        AS question_content,
+            q.options,
+            q.answer,
+            q.explanation,
+            q.subject_id,
+            s.name           AS subject_name,
+            eb.error_reason,
+            eb.is_mastered,
+            eb.review_count,
+            eb.consecutive_correct,
+            eb.review_interval_days,
+            eb.next_review_at,
+            eb.created_at,
+            eb.updated_at
+        FROM t_error_book eb
+        INNER JOIN t_question q ON eb.question_id = q.id
+        LEFT  JOIN t_subject  s ON q.subject_id   = s.id
+        WHERE eb.user_id     = #{userId}
+          AND eb.is_mastered = 0
+          AND (eb.next_review_at IS NULL OR eb.next_review_at &lt;= NOW())
+        ORDER BY eb.next_review_at ASC
+    </select>
+
+</mapper>

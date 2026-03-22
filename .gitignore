@@ -1,0 +1,53 @@
+# ===== 敏感配置（绝对不提交）=====
+.env
+
+# ===== Java / Maven =====
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/
+!.mvn/wrapper/maven-wrapper.jar
+
+# ===== Node / npm =====
+node_modules/
+frontend/dist/
+*.log
+npm-debug.log*
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ===== Docker =====
+.docker/
+
+# ===== Python =====
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+*.egg-info/
+
+# ===== MinIO / 本地存储 =====
+minio-data/
+
+# ===== 日志 =====
+logs/
+*.log
+
+# ===== 项目无关目录 =====
+.claude/
+.obsidian/
+.spec-workflow/
+Source/
+WorkRiver/
+thesis/
